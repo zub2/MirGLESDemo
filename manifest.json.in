@@ -1,0 +1,15 @@
+{
+	"name": "zub.mirglesdemo",
+	"description": "Mir OpenGL ES demo",
+	"architecture": "@CLICK_ARCH@",
+	"title": "MirGLESDemo",
+	"hooks": {
+		"MirGLESDemo": {
+			"apparmor": "MirGLESDemo.apparmor",
+			"desktop": "MirGLESDemo.desktop"
+		}
+	},
+	"version": "0.1",
+	"maintainer": "David Kozub <zub.272@gmail.com>",
+	"framework": "ubuntu-sdk-15.04.5"
+}

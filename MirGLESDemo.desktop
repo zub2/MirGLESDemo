@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Mir OpenGL ES demo
+Comment=Mir OpenGL ES demo project
+Exec=mir_gles_demo
+Icon=media/MirGLESDemo.png
+Terminal=false
+Type=Application
+X-Ubuntu-Touch=true
