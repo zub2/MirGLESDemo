@@ -19,6 +19,15 @@ endif()
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 
 add_executable(mir_gles_demo
+	Exceptions.h
+	MirConnectionWrapper.h
+	MirConnectionWrapper.cpp
+	MirNativeWindowRenderer.h
+	MirNativeWindowControl.h
+	MirNativeWindow.h
+	MirNativeWindow.cpp
+	DemoRenderer.h
+	DemoRenderer.cpp
 	MirGLESDemo.cpp
 )
 target_include_directories(mir_gles_demo PRIVATE
