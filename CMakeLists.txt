@@ -9,6 +9,9 @@ string(REGEX REPLACE "gcc$" "g++" CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
 # it as compile option.
 add_compile_options(-std=c++11)
 
+# enable some warnings
+add_compile_options(-Wall -Wextra -pedantic)
+
 # Do not remove this line, its required for the correct functionality of the Ubuntu-SDK
 set(UBUNTU_MANIFEST_PATH "manifest.json.in" CACHE INTERNAL "Tells QtCreator location and name of the manifest file")
 
