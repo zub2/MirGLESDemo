@@ -18,6 +18,8 @@ endif()
 # $ usdk-target maint device-armhf apt install libboost-filesystem-dev:armhf libboost-system-dev:armhf
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 
+find_package(PNG REQUIRED)
+
 add_executable(mir_gles_demo
 	Exceptions.h
 	MirConnectionWrapper.h
@@ -28,19 +30,26 @@ add_executable(mir_gles_demo
 	MirNativeWindow.cpp
 	ResourcePath.h
 	ResourcePath.cpp
+	Image.h
+	Image.cpp
+	PNGLoader.h
+	PNGLoader.cpp
 	DemoRenderer.h
 	DemoRenderer.cpp
 	MirGLESDemo.cpp
 )
+target_compile_definitions(mir_gles_demo PRIVATE ${PNG_DEFINITIONS})
 target_include_directories(mir_gles_demo PRIVATE
 	${MIRCLIENT_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}
+	${PNG_INCLUDE_DIRS}
 )
 target_link_libraries(mir_gles_demo
 	${MIRCLIENT_LIBRARIES}
 	${LIBEGL}
 	${LIBGLESv2}
 	${Boost_LIBRARIES}
+	${PNG_LIBRARIES}
 )
 target_compile_options(mir_gles_demo PUBLIC ${MIRCLIENT_CFLAGS_OTHER})
 set_target_properties(mir_gles_demo PROPERTIES LINK_FLAGS "${MIRCLIENT_LDFLAGS_OTHER}")
