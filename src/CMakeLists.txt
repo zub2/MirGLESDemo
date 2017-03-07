@@ -26,6 +26,8 @@ add_executable(mir_gles_demo
 	MirNativeWindowControl.h
 	MirNativeWindow.h
 	MirNativeWindow.cpp
+	ResourcePath.h
+	ResourcePath.cpp
 	DemoRenderer.h
 	DemoRenderer.cpp
 	MirGLESDemo.cpp
