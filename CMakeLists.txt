@@ -38,4 +38,10 @@ install(DIRECTORY "media" DESTINATION ${DATA_DIR} PATTERN "media/src" EXCLUDE)
 add_subdirectory(src)
 
 # No op custom target for all not compiled files, so they show up in the QtCreator project tree
-add_custom_target("MirGLESDemo_ClickFiles" ALL SOURCES "MirGLESDemo.desktop" "MirGLESDemo.apparmor" "manifest.json.in")
+add_custom_target("MirGLESDemo_ClickFiles" ALL SOURCES
+	MirGLESDemo.desktop
+	MirGLESDemo.apparmor
+	manifest.json.in
+	media/vertex_shader.glslv
+	media/fragment_shader.glslf
+)

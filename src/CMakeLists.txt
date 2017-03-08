@@ -21,6 +21,8 @@ find_package(Boost REQUIRED COMPONENTS filesystem system)
 find_package(PNG REQUIRED)
 
 add_executable(mir_gles_demo
+	gl/Shader.h
+	gl/Shader.cpp
 	Exceptions.h
 	MirConnectionWrapper.h
 	MirConnectionWrapper.cpp
@@ -30,6 +32,8 @@ add_executable(mir_gles_demo
 	MirNativeWindow.cpp
 	ResourcePath.h
 	ResourcePath.cpp
+	ShaderLoader.h
+	ShaderLoader.cpp
 	Image.h
 	Image.cpp
 	PNGLoader.h
