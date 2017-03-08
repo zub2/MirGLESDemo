@@ -23,6 +23,8 @@ find_package(PNG REQUIRED)
 add_executable(mir_gles_demo
 	gl/Shader.h
 	gl/Shader.cpp
+        gl/Program.h
+        gl/Program.cpp
 	Exceptions.h
 	MirConnectionWrapper.h
 	MirConnectionWrapper.cpp
