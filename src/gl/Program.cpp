@@ -31,6 +31,11 @@ Program::Program(const Shader& vertexShader, const Shader& fragmentShader)
 	glAttachShader(m_program, fragmentShader.getGLShader());
 }
 
+void Program::bindAttribute(GLuint index, const char *name)
+{
+	glBindAttribLocation(m_program, index, name);
+}
+
 void Program::link()
 {
 	glLinkProgram(m_program);

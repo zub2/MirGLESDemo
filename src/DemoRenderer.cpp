@@ -17,6 +17,9 @@
  * along with MirGLESDemo.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "DemoRenderer.h"
+#include "ResourcePath.h"
+#include "PNGLoader.h"
+#include "ShaderLoader.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -24,12 +27,36 @@
 
 DemoRenderer::DemoRenderer():
 	m_fingerDown(false)
-{}
+{
+	// TEST
+	std::cout << "Loading image" << std::endl;
+	Image image = loadPNG(getResourcePath("MirGLESDemo.png"));
+	std::cout << "Loaded image: width = " << image.getWidth() << ", height = " << image.getHeight() << std::endl;
+}
 
 void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 {
-	glClearColor(0., 0., 1., 1.);
+	std::cout << "Loading shader" << std::endl;
+	std::shared_ptr<Shader> vertexShader = loadShader(ShaderType::Vertex, getResourcePath("vertex_shader.glslv"));
+	std::shared_ptr<Shader> fragmentShader = loadShader(ShaderType::Fragment, getResourcePath("fragment_shader.glslf"));
+
+	Program program(*vertexShader, *fragmentShader);
+	program.bindAttribute(0, "vPosition");
+	program.link();
+	glUseProgram(program.getGLProgram());
+
 	glViewport(0, 0, nativeWindow.getWidth(), nativeWindow.getHeight());
+	glClearColor(0., 0., 1., 1.);
+
+	const GLfloat vertices[] =
+	{
+		0.0f,  0.5f, 0.0f,
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f,  0.0f
+	};
+
+	// Load the vertex data
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
 	for (int i = 0; i < 1000; i++)
 	{
@@ -54,12 +81,17 @@ void DemoRenderer::handleEvent(const MirEvent* event)
 
 void DemoRenderer::renderFrame()
 {
+	glEnableVertexAttribArray(0);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+#if 0
 	if (m_fingerDown)
 		glClearColor(1., 0., 0., 1.);
 	else
 		glClearColor(0., 0., 1., 1.);
 
 	glClear(GL_COLOR_BUFFER_BIT);
+#endif
 }
 
 void DemoRenderer::handleInputEvent(const MirInputEvent* inputEvent)

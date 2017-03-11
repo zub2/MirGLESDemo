@@ -24,6 +24,8 @@
 #include "MirNativeWindowRenderer.h"
 #include "MirNativeWindowControl.h"
 
+#include "gl/Program.h"
+
 class DemoRenderer: public MirNativeWindowRenderer
 {
 public:

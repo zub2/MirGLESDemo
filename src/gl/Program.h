@@ -29,6 +29,7 @@ public:
 	Program(const Shader& vertexShader, const Shader& fragmentShader);
 	~Program();
 
+	void bindAttribute(GLuint index, const char *name);
 	void link();
 
 	GLuint getGLProgram() const
