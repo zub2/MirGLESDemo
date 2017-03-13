@@ -29,7 +29,7 @@ public:
 	Program(const Shader& vertexShader, const Shader& fragmentShader);
 	~Program();
 
-	void bindAttribute(GLuint index, const char *name);
+	GLuint getAttribute(const char* name);
 	void link();
 
 	GLuint getGLProgram() const
@@ -44,6 +44,7 @@ public:
 	Program(const Program&) = delete;
 
 private:
+	bool m_isLinked;
 	GLuint m_program;
 };
 

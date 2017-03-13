@@ -41,8 +41,8 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	std::shared_ptr<Shader> fragmentShader = loadShader(ShaderType::Fragment, getResourcePath("fragment_shader.glslf"));
 
 	Program program(*vertexShader, *fragmentShader);
-	program.bindAttribute(0, "vPosition");
 	program.link();
+	const GLint verticesIndex = program.getAttribute("vPosition");
 	glUseProgram(program.getGLProgram());
 
 	glViewport(0, 0, nativeWindow.getWidth(), nativeWindow.getHeight());
@@ -56,7 +56,7 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	};
 
 	// Load the vertex data
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+	glVertexAttribPointer(verticesIndex, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
 	for (int i = 0; i < 1000; i++)
 	{

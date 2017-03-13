@@ -17,10 +17,12 @@
  * along with MirGLESDemo.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Program.h"
+#include "../Exceptions.h"
 
 #include <stdexcept>
 
-Program::Program(const Shader& vertexShader, const Shader& fragmentShader)
+Program::Program(const Shader& vertexShader, const Shader& fragmentShader):
+	m_isLinked(false)
 {
 	m_program = glCreateProgram();
 	if (m_program == 0)
@@ -31,9 +33,18 @@ Program::Program(const Shader& vertexShader, const Shader& fragmentShader)
 	glAttachShader(m_program, fragmentShader.getGLShader());
 }
 
-void Program::bindAttribute(GLuint index, const char *name)
+GLuint Program::getAttribute(const char* name)
 {
-	glBindAttribLocation(m_program, index, name);
+	if (!m_isLinked)
+		throw std::runtime_error("getAttribute() can only be called after the program has been linked");
+
+	GLint index = glGetAttribLocation(m_program, name);
+	if (index < 0)
+	{
+		throw GLError(std::string("Can't get location of attribute '") + name + "'");
+	}
+
+	return static_cast<GLuint>(index);
 }
 
 void Program::link()
@@ -54,6 +65,8 @@ void Program::link()
 		}
 		throw std::runtime_error("Can't link program: no error info available");
 	}
+
+	m_isLinked = true;
 }
 
 Program::~Program()
