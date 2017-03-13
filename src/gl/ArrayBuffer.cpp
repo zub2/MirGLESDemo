@@ -16,33 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with MirGLESDemo.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef DEMO_RENDERER_H
-#define DEMO_RENDERER_H
+#include "ArrayBuffer.h"
+#include <stdexcept>
 
-#include <mir_toolkit/events/event.h>
-#include <GLES2/gl2.h>
-
-#include <glm/glm.hpp>
-
-#include "MirNativeWindowRenderer.h"
-#include "MirNativeWindowControl.h"
-
-class DemoRenderer: public MirNativeWindowRenderer
+ArrayBuffer::ArrayBuffer()
 {
-public:
-	DemoRenderer();
-	virtual void run(MirNativeWindowControl& nativeWindow) override;
-	virtual void handleEvent(const MirEvent* event) override;
+	glGenBuffers(1, &m_buffer);
+}
 
-private:
-	void renderFrame();
-	void handleInputEvent(const MirInputEvent* inputEvent);
-	void handleInputTouchEvent(const MirTouchEvent* touchEvent);
+ArrayBuffer::~ArrayBuffer()
+{
+	glDeleteBuffers(1, &m_buffer);
+}
 
-	GLuint m_mvpMatrixIndex;
-	glm::mat4 m_projectionMatrix;
-
-	bool m_fingerDown;
-};
-
-#endif // DEMO_RENDERER_H
+void ArrayBuffer::bind()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
+}

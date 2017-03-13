@@ -25,6 +25,8 @@ add_executable(mir_gles_demo
 	gl/Shader.cpp
 	gl/Program.h
 	gl/Program.cpp
+	gl/ArrayBuffer.h
+	gl/ArrayBuffer.cpp
 	Exceptions.h
 	MirConnectionWrapper.h
 	MirConnectionWrapper.cpp

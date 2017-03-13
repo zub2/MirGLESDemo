@@ -21,6 +21,9 @@
 #include "PNGLoader.h"
 #include "ShaderLoader.h"
 
+#include "gl/Program.h"
+#include "gl/ArrayBuffer.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
@@ -54,15 +57,19 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	const GLint vertexIndex = program.getAttribute("vPosition");
 	m_mvpMatrixIndex = program.getUniform("MVPMatrix");
 
+	ArrayBuffer arrayBuffer;
+	arrayBuffer.bind();
+
 	const glm::vec3 vertices[] =
 	{
 		{0.0f,  0.5f, 0.0f},
 		{-0.5f, -0.5f, 0.0f},
 		{0.5f, -0.5f,  0.0f}
 	};
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), glm::value_ptr(vertices[0]), GL_STATIC_DRAW);
 
-	// Load the vertex data
-	glVertexAttribPointer(vertexIndex, 3, GL_FLOAT, GL_FALSE, 0, glm::value_ptr(vertices[0]));
+	glEnableVertexAttribArray(vertexIndex);
+	glVertexAttribPointer(vertexIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	m_projectionMatrix = glm::perspective(glm::radians(45.0f),
 										  static_cast<float>(nativeWindow.getWidth()) / static_cast<float>(nativeWindow.getHeight()),
@@ -109,7 +116,6 @@ void DemoRenderer::renderFrame()
 	glm::mat4 mvpMatrix = m_projectionMatrix * view * model;
 	glUniformMatrix4fv(m_mvpMatrixIndex, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 
-	glEnableVertexAttribArray(0);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 #if 0
