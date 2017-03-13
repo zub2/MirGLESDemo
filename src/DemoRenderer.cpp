@@ -23,9 +23,13 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <GLES2/gl2.h>
+#include <cmath>
+
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 DemoRenderer::DemoRenderer():
+	m_mvpMatrixIndex(0),
 	m_fingerDown(false)
 {
 	// TEST
@@ -42,21 +46,27 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 
 	Program program(*vertexShader, *fragmentShader);
 	program.link();
-	const GLint verticesIndex = program.getAttribute("vPosition");
 	glUseProgram(program.getGLProgram());
 
 	glViewport(0, 0, nativeWindow.getWidth(), nativeWindow.getHeight());
 	glClearColor(0., 0., 1., 1.);
 
-	const GLfloat vertices[] =
+	const GLint vertexIndex = program.getAttribute("vPosition");
+	m_mvpMatrixIndex = program.getUniform("MVPMatrix");
+
+	const glm::vec3 vertices[] =
 	{
-		0.0f,  0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f,  0.0f
+		{0.0f,  0.5f, 0.0f},
+		{-0.5f, -0.5f, 0.0f},
+		{0.5f, -0.5f,  0.0f}
 	};
 
 	// Load the vertex data
-	glVertexAttribPointer(verticesIndex, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+	glVertexAttribPointer(vertexIndex, 3, GL_FLOAT, GL_FALSE, 0, glm::value_ptr(vertices[0]));
+
+	m_projectionMatrix = glm::perspective(glm::radians(45.0f),
+										  static_cast<float>(nativeWindow.getWidth()) / static_cast<float>(nativeWindow.getHeight()),
+										  0.1f, 100.0f);
 
 	for (int i = 0; i < 1000; i++)
 	{
@@ -81,6 +91,24 @@ void DemoRenderer::handleEvent(const MirEvent* event)
 
 void DemoRenderer::renderFrame()
 {
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glm::mat4 view = glm::lookAt(
+				glm::vec3(4,3,3),
+				glm::vec3(0,0,0),
+				glm::vec3(0,1,0)
+				);
+
+	static float angle = 0.0f;
+	angle += 2.0*M_PI / 200;
+	if (angle > 2.0 * M_PI)
+		angle = 0.0;
+
+	glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::mat4 mvpMatrix = m_projectionMatrix * view * model;
+	glUniformMatrix4fv(m_mvpMatrixIndex, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+
 	glEnableVertexAttribArray(0);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -89,8 +117,6 @@ void DemoRenderer::renderFrame()
 		glClearColor(1., 0., 0., 1.);
 	else
 		glClearColor(0., 0., 1., 1.);
-
-	glClear(GL_COLOR_BUFFER_BIT);
 #endif
 }
 

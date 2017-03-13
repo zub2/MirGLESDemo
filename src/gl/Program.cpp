@@ -33,20 +33,6 @@ Program::Program(const Shader& vertexShader, const Shader& fragmentShader):
 	glAttachShader(m_program, fragmentShader.getGLShader());
 }
 
-GLuint Program::getAttribute(const char* name)
-{
-	if (!m_isLinked)
-		throw std::runtime_error("getAttribute() can only be called after the program has been linked");
-
-	GLint index = glGetAttribLocation(m_program, name);
-	if (index < 0)
-	{
-		throw GLError(std::string("Can't get location of attribute '") + name + "'");
-	}
-
-	return static_cast<GLuint>(index);
-}
-
 void Program::link()
 {
 	glLinkProgram(m_program);
@@ -67,6 +53,34 @@ void Program::link()
 	}
 
 	m_isLinked = true;
+}
+
+GLuint Program::getAttribute(const char* name)
+{
+	if (!m_isLinked)
+		throw std::runtime_error("getAttribute() can only be called after the program has been linked");
+
+	GLint index = glGetAttribLocation(m_program, name);
+	if (index < 0)
+	{
+		throw GLError(std::string("Can't get location of attribute '") + name + "'");
+	}
+
+	return static_cast<GLuint>(index);
+}
+
+GLuint Program::getUniform(const char* name)
+{
+	if (!m_isLinked)
+		throw std::runtime_error("getUniform() can only be called after the program has been linked");
+
+	GLint index = glGetUniformLocation(m_program, name);
+	if (index < 0)
+	{
+		throw GLError(std::string("Can't get location of uniform '") + name + "'");
+	}
+
+	return static_cast<GLuint>(index);
 }
 
 Program::~Program()

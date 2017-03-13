@@ -20,6 +20,9 @@
 #define DEMO_RENDERER_H
 
 #include <mir_toolkit/events/event.h>
+#include <GLES2/gl2.h>
+
+#include <glm/glm.hpp>
 
 #include "MirNativeWindowRenderer.h"
 #include "MirNativeWindowControl.h"
@@ -37,6 +40,9 @@ private:
 	void renderFrame();
 	void handleInputEvent(const MirInputEvent* inputEvent);
 	void handleInputTouchEvent(const MirTouchEvent* touchEvent);
+
+	GLuint m_mvpMatrixIndex;
+	glm::mat4 m_projectionMatrix;
 
 	bool m_fingerDown;
 };

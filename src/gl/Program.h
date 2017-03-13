@@ -29,8 +29,10 @@ public:
 	Program(const Shader& vertexShader, const Shader& fragmentShader);
 	~Program();
 
-	GLuint getAttribute(const char* name);
 	void link();
+
+	GLuint getAttribute(const char* name);
+	GLuint getUniform(const char* name);
 
 	GLuint getGLProgram() const
 	{
