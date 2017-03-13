@@ -45,10 +45,11 @@ add_executable(mir_gles_demo
 	MirGLESDemo.cpp
 )
 target_compile_definitions(mir_gles_demo PRIVATE ${PNG_DEFINITIONS})
-target_include_directories(mir_gles_demo PRIVATE
+target_include_directories(mir_gles_demo SYSTEM PRIVATE
 	${MIRCLIENT_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}
 	${PNG_INCLUDE_DIRS}
+	${GLM_INCLUDE_DIRS}
 )
 target_link_libraries(mir_gles_demo
 	${MIRCLIENT_LIBRARIES}

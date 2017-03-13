@@ -35,6 +35,7 @@ install(FILES
 )
 install(DIRECTORY "media" DESTINATION ${DATA_DIR} PATTERN "media/src" EXCLUDE)
 
+add_subdirectory(ext)
 add_subdirectory(src)
 
 # No op custom target for all not compiled files, so they show up in the QtCreator project tree
