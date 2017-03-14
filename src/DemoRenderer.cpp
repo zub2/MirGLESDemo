@@ -27,18 +27,37 @@
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <vector>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 DemoRenderer::DemoRenderer():
 	m_mvpMatrixIndex(0),
+	m_cubeVertexCount(0),
 	m_fingerDown(false)
 {
 	// TEST
 	std::cout << "Loading image" << std::endl;
 	Image image = loadPNG(getResourcePath("MirGLESDemo.png"));
 	std::cout << "Loaded image: width = " << image.getWidth() << ", height = " << image.getHeight() << std::endl;
+}
+
+void addFace(std::vector<glm::vec3>& triangles, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& d,
+			 std::vector<glm::vec3>& colors, const glm::vec3& color)
+{
+	// 1st triangle
+	triangles.push_back(a);
+	triangles.push_back(b);
+	triangles.push_back(d);
+
+	// 2nd triangle
+	triangles.push_back(b);
+	triangles.push_back(d);
+	triangles.push_back(c);
+
+	for (int i = 0; i < 6; i++)
+		colors.push_back(color);
 }
 
 void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
@@ -52,28 +71,56 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	glUseProgram(program.getGLProgram());
 
 	glViewport(0, 0, nativeWindow.getWidth(), nativeWindow.getHeight());
-	glClearColor(0., 0., 1., 1.);
+	glClearColor(0., 0., 0., 1.);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	const GLint vertexIndex = program.getAttribute("vPosition");
+	const GLint colorIndex = program.getAttribute("vColor");
 	m_mvpMatrixIndex = program.getUniform("MVPMatrix");
+
+	std::vector<glm::vec3> v;
+	std::vector<glm::vec3> c;
+	v.reserve(6 /* faces */ * 2 /* 2 triangles for each face */);
+	c.reserve(v.capacity());
+
+	// z = +1
+	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, -1, +1), c, glm::vec3(1,0,0));
+
+	// z = -1
+	addFace(v, glm::vec3(-1, -1, -1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1), c, glm::vec3(1,0,0));
+
+	// x = +1
+	addFace(v, glm::vec3(+1, -1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1), c, glm::vec3(0,1,0));
+
+	// x = -1
+	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(-1, -1, -1), c, glm::vec3(0,1,0));
+
+	// y = +1
+	addFace(v, glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, +1, +1), c, glm::vec3(0,0,1));
+
+	// y = -1
+	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, -1, -1), glm::vec3(+1, -1, -1), glm::vec3(+1, -1, +1), c, glm::vec3(0,0,1));
 
 	ArrayBuffer arrayBuffer;
 	arrayBuffer.bind();
-
-	const glm::vec3 vertices[] =
-	{
-		{0.0f,  0.5f, 0.0f},
-		{-0.5f, -0.5f, 0.0f},
-		{0.5f, -0.5f,  0.0f}
-	};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), glm::value_ptr(vertices[0]), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, v.size()*sizeof(decltype(v[0])), glm::value_ptr(v[0]), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(vertexIndex);
 	glVertexAttribPointer(vertexIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
+	ArrayBuffer colorBuffer;
+	colorBuffer.bind();
+	glBufferData(GL_ARRAY_BUFFER, c.size()*sizeof(decltype(c[0])), glm::value_ptr(c[0]), GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(colorIndex);
+	glVertexAttribPointer(colorIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
 	m_projectionMatrix = glm::perspective(glm::radians(45.0f),
 										  static_cast<float>(nativeWindow.getWidth()) / static_cast<float>(nativeWindow.getHeight()),
 										  0.1f, 100.0f);
+
+	m_cubeVertexCount = v.size();
 
 	for (int i = 0; i < 1000; i++)
 	{
@@ -98,7 +145,7 @@ void DemoRenderer::handleEvent(const MirEvent* event)
 
 void DemoRenderer::renderFrame()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::mat4 view = glm::lookAt(
 				glm::vec3(4,3,3),
@@ -108,15 +155,15 @@ void DemoRenderer::renderFrame()
 
 	static float angle = 0.0f;
 	angle += 2.0*M_PI / 200;
-	if (angle > 2.0 * M_PI)
-		angle = 0.0;
+	if (angle >= 2.0 * M_PI)
+		angle -= 2.0 * M_PI;
 
 	glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	glm::mat4 mvpMatrix = m_projectionMatrix * view * model;
 	glUniformMatrix4fv(m_mvpMatrixIndex, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, m_cubeVertexCount);
 
 #if 0
 	if (m_fingerDown)

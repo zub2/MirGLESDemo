@@ -41,6 +41,7 @@ private:
 
 	GLuint m_mvpMatrixIndex;
 	glm::mat4 m_projectionMatrix;
+	GLuint m_cubeVertexCount;
 
 	bool m_fingerDown;
 };
