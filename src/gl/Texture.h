@@ -16,36 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with MirGLESDemo.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef GL_SHADER_H
-#define GL_SHADER_H
+#ifndef GL_TEXTURE_H
+#define GL_TEXTURE_H
 
+#include "../Image.h"
 #include <GLES2/gl2.h>
 
-enum class ShaderType
-{
-	Vertex,
-	Fragment
-};
-
-class Shader
+class Texture2D
 {
 public:
-	Shader(ShaderType type, const char* program);
-	~Shader();
+	explicit Texture2D(const Image &image);
+	~Texture2D();
 
-	GLuint getGLShader() const
+	GLuint getGLTexture() const
 	{
-		return m_shader;
+		return m_texture;
 	}
 
 	// allow move, disallow copy
-	Shader& operator=(Shader&&) = default;
-	Shader(Shader&&) = default;
-	Shader& operator=(const Shader&) = delete;
-	Shader(const Shader&) = delete;
+	Texture2D& operator=(Texture2D&&) = default;
+	Texture2D(Texture2D&&) = default;
+	Texture2D& operator=(const Texture2D&) = delete;
+	Texture2D(const Texture2D&) = delete;
 
 private:
-	GLuint m_shader;
+	GLuint m_texture;
 };
 
-#endif // GL_SHADER_H
+#endif // GL_TEXTURE_H

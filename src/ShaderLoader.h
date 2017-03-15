@@ -22,6 +22,7 @@
 #include "gl/Shader.h"
 
 #include <string>
+#include <memory>
 
 std::shared_ptr<Shader> loadShader(ShaderType type, const std::string& fileName);
 

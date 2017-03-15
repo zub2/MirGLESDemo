@@ -23,6 +23,7 @@
 
 #include "gl/Program.h"
 #include "gl/ArrayBuffer.h"
+#include "gl/Texture.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -36,15 +37,10 @@ DemoRenderer::DemoRenderer():
 	m_mvpMatrixIndex(0),
 	m_cubeVertexCount(0),
 	m_fingerDown(false)
-{
-	// TEST
-	std::cout << "Loading image" << std::endl;
-	Image image = loadPNG(getResourcePath("MirGLESDemo.png"));
-	std::cout << "Loaded image: width = " << image.getWidth() << ", height = " << image.getHeight() << std::endl;
-}
+{}
 
-void addFace(std::vector<glm::vec3>& triangles, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& d,
-			 std::vector<glm::vec3>& colors, const glm::vec3& color)
+template<typename VEC>
+void addFace(std::vector<VEC>& triangles, const VEC& a, const VEC& b, const VEC& c, const VEC& d)
 {
 	// 1st triangle
 	triangles.push_back(a);
@@ -55,9 +51,6 @@ void addFace(std::vector<glm::vec3>& triangles, const glm::vec3& a, const glm::v
 	triangles.push_back(b);
 	triangles.push_back(d);
 	triangles.push_back(c);
-
-	for (int i = 0; i < 6; i++)
-		colors.push_back(color);
 }
 
 void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
@@ -76,31 +69,38 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	glDepthFunc(GL_LESS);
 
 	const GLint vertexIndex = program.getAttribute("vPosition");
-	const GLint colorIndex = program.getAttribute("vColor");
+	const GLint colorIndex = program.getAttribute("vTexCoord");
 	m_mvpMatrixIndex = program.getUniform("MVPMatrix");
+	const GLint textureSamplerIndex = program.getUniform("textureSampler");
 
-	std::vector<glm::vec3> v;
-	std::vector<glm::vec3> c;
+	std::vector<glm::vec3> v; // vertices
+	std::vector<glm::vec2> c; // text coords
 	v.reserve(6 /* faces */ * 2 /* 2 triangles for each face */);
 	c.reserve(v.capacity());
 
 	// z = +1
-	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, -1, +1), c, glm::vec3(1,0,0));
+	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, -1, +1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
 
 	// z = -1
-	addFace(v, glm::vec3(-1, -1, -1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1), c, glm::vec3(1,0,0));
+	addFace(v, glm::vec3(-1, -1, -1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
 
 	// x = +1
-	addFace(v, glm::vec3(+1, -1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1), c, glm::vec3(0,1,0));
+	addFace(v, glm::vec3(+1, -1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
 
 	// x = -1
-	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(-1, -1, -1), c, glm::vec3(0,1,0));
+	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(-1, -1, -1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
 
 	// y = +1
-	addFace(v, glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, +1, +1), c, glm::vec3(0,0,1));
+	addFace(v, glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, +1, +1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
 
 	// y = -1
-	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, -1, -1), glm::vec3(+1, -1, -1), glm::vec3(+1, -1, +1), c, glm::vec3(0,0,1));
+	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, -1, -1), glm::vec3(+1, -1, -1), glm::vec3(+1, -1, +1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
 
 	ArrayBuffer arrayBuffer;
 	arrayBuffer.bind();
@@ -114,7 +114,14 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	glBufferData(GL_ARRAY_BUFFER, c.size()*sizeof(decltype(c[0])), glm::value_ptr(c[0]), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(colorIndex);
-	glVertexAttribPointer(colorIndex, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+	glVertexAttribPointer(colorIndex, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	Texture2D texture(loadPNG(getResourcePath("MirGLESDemo.png")));
+	texture.getGLTexture();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture.getGLTexture());
+	glUniform1i(textureSamplerIndex, 0 /* Texture unit 0 */);
 
 	m_projectionMatrix = glm::perspective(glm::radians(45.0f),
 										  static_cast<float>(nativeWindow.getWidth()) / static_cast<float>(nativeWindow.getHeight()),

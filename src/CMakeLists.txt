@@ -27,6 +27,8 @@ add_executable(mir_gles_demo
 	gl/Program.cpp
 	gl/ArrayBuffer.h
 	gl/ArrayBuffer.cpp
+	gl/Texture.h
+	gl/Texture.cpp
 	Exceptions.h
 	MirConnectionWrapper.h
 	MirConnectionWrapper.cpp

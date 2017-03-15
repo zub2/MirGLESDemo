@@ -18,6 +18,7 @@
  */
 #include "Shader.h"
 #include <stdexcept>
+#include <memory>
 
 static GLenum getGLShaderType(ShaderType type)
 {

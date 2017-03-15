@@ -1,11 +1,11 @@
 #version 100
 attribute vec3 vPosition;
-attribute vec3 vColor;
+attribute vec2 vTexCoord;
 uniform mat4 MVPMatrix;
-varying vec4 fragColor;
+varying vec2 texCoord;
 
 void main()
 {
-    gl_Position = MVPMatrix * vec4(vPosition, 1);
-	fragColor = vec4(vColor, 1);
+	gl_Position = MVPMatrix * vec4(vPosition, 1);
+	texCoord = vTexCoord;
 }

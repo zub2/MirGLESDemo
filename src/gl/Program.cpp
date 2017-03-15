@@ -20,6 +20,7 @@
 #include "../Exceptions.h"
 
 #include <stdexcept>
+#include <memory>
 
 Program::Program(const Shader& vertexShader, const Shader& fragmentShader):
 	m_isLinked(false)

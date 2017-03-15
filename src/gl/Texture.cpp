@@ -16,36 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with MirGLESDemo.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef GL_SHADER_H
-#define GL_SHADER_H
+#include "Texture.h"
+#include <stdexcept>
 
-#include <GLES2/gl2.h>
-
-enum class ShaderType
+Texture2D::Texture2D(const Image &image)
 {
-	Vertex,
-	Fragment
-};
+	glGenTextures(1, &m_texture);
+	if (m_texture == 0)
+		throw std::runtime_error("Can't create a new texture.");
 
-class Shader
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getWidth(), image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getData());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+Texture2D::~Texture2D()
 {
-public:
-	Shader(ShaderType type, const char* program);
-	~Shader();
-
-	GLuint getGLShader() const
-	{
-		return m_shader;
-	}
-
-	// allow move, disallow copy
-	Shader& operator=(Shader&&) = default;
-	Shader(Shader&&) = default;
-	Shader& operator=(const Shader&) = delete;
-	Shader(const Shader&) = delete;
-
-private:
-	GLuint m_shader;
-};
-
-#endif // GL_SHADER_H
+	glDeleteTextures(1, &m_texture);
+}
