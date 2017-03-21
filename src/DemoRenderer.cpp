@@ -64,7 +64,8 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	glUseProgram(program.getGLProgram());
 
 	glViewport(0, 0, nativeWindow.getWidth(), nativeWindow.getHeight());
-	glClearColor(0., 0., 0., 1.);
+	glClearColor(0.2, 0.4, 0., 1.);
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
@@ -78,29 +79,32 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	v.reserve(6 /* faces */ * 2 /* 2 triangles for each face */);
 	c.reserve(v.capacity());
 
-	// z = +1
+	constexpr float HALF = 1.0/2.0;
+	constexpr float THIRD = 1.0/3.0;
+
+	// z = +1, value 1
 	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, -1, +1));
-	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
+	addFace(c, glm::vec2(0, HALF), glm::vec2(0, 1), glm::vec2(THIRD, 1), glm::vec2(THIRD, HALF));
 
-	// z = -1
-	addFace(v, glm::vec3(-1, -1, -1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1));
-	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
+	// z = -1, value 6
+	addFace(v, glm::vec3(+1, -1, -1), glm::vec3(+1, +1, -1), glm::vec3(-1, +1, -1), glm::vec3(-1, -1, -1));
+	addFace(c, glm::vec2(2*THIRD, 0), glm::vec2(2*THIRD, HALF), glm::vec2(1, HALF), glm::vec2(1, 0));
 
-	// x = +1
+	// x = +1, value 2
 	addFace(v, glm::vec3(+1, -1, +1), glm::vec3(+1, +1, +1), glm::vec3(+1, +1, -1), glm::vec3(+1, -1, -1));
-	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
+	addFace(c, glm::vec2(THIRD, HALF), glm::vec2(THIRD, 1), glm::vec2(2*THIRD, 1), glm::vec2(2*THIRD, HALF));
 
-	// x = -1
-	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(-1, -1, -1));
-	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
+	// x = -1, value 5
+	addFace(v, glm::vec3(-1, -1, -1), glm::vec3(-1, +1, -1), glm::vec3(-1, +1, +1), glm::vec3(-1, -1, +1));
+	addFace(c, glm::vec2(THIRD, 0), glm::vec2(THIRD, HALF), glm::vec2(2*THIRD, HALF), glm::vec2(2*THIRD, 0));
 
-	// y = +1
+	// y = +1, value 3
 	addFace(v, glm::vec3(-1, +1, +1), glm::vec3(-1, +1, -1), glm::vec3(+1, +1, -1), glm::vec3(+1, +1, +1));
-	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
+	addFace(c, glm::vec2(2*THIRD, HALF), glm::vec2(2*THIRD, 1), glm::vec2(1, 1), glm::vec2(1, HALF));
 
-	// y = -1
-	addFace(v, glm::vec3(-1, -1, +1), glm::vec3(-1, -1, -1), glm::vec3(+1, -1, -1), glm::vec3(+1, -1, +1));
-	addFace(c, glm::vec2(0, 0), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0));
+	// y = -1, value 4
+	addFace(v, glm::vec3(-1, -1, -1), glm::vec3(-1, -1, +1), glm::vec3(+1, -1, +1), glm::vec3(+1, -1, -1));
+	addFace(c, glm::vec2(0, 0), glm::vec2(0, HALF), glm::vec2(THIRD, HALF), glm::vec2(THIRD, 0));
 
 	ArrayBuffer arrayBuffer;
 	arrayBuffer.bind();
@@ -116,7 +120,7 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 	glEnableVertexAttribArray(colorIndex);
 	glVertexAttribPointer(colorIndex, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-	Texture2D texture(loadPNG(getResourcePath("MirGLESDemo.png")));
+	Texture2D texture(loadPNG(getResourcePath("die.png")));
 	texture.getGLTexture();
 
 	glActiveTexture(GL_TEXTURE0);
