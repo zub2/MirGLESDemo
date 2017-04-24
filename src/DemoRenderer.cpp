@@ -44,8 +44,8 @@ DemoRenderer::DemoRenderer():
 	m_lastY(0),
 	m_rotationAngularSpeedX(0.0f),
 	m_rotationAngularSpeedY(0.0f),
-	m_rotationAngleX(0.0f),
-	m_rotationAngleY(0.0f),
+	m_rotationAngleX(M_PI/8.0f),
+	m_rotationAngleY(M_PI_4),
 	m_lastFrameTimeStampValid(false),
 	m_swipeGesture(*this)
 {}
