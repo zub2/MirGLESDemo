@@ -44,6 +44,8 @@ add_executable(mir_gles_demo
 	Image.cpp
 	PNGLoader.h
 	PNGLoader.cpp
+	SwipeGesture.h
+	SwipeGesture.cpp
 	DemoRenderer.h
 	DemoRenderer.cpp
 	MirGLESDemo.cpp

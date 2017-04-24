@@ -29,28 +29,50 @@
 #include <stdexcept>
 #include <cmath>
 #include <vector>
+#include <thread>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/norm.hpp>
 
 DemoRenderer::DemoRenderer():
 	m_mvpMatrixIndex(0),
 	m_cubeVertexCount(0),
-	m_fingerDown(false)
+	m_pointerState(PointerState::Up),
+	m_fingerId(0),
+	m_lastX(0),
+	m_lastY(0),
+	m_rotationAngularSpeedX(0.0f),
+	m_rotationAngularSpeedY(0.0f),
+	m_rotationAngleX(0.0f),
+	m_rotationAngleY(0.0f),
+	m_lastFrameTimeStampValid(false),
+	m_swipeGesture(*this)
 {}
 
-template<typename VEC>
-void addFace(std::vector<VEC>& triangles, const VEC& a, const VEC& b, const VEC& c, const VEC& d)
+namespace
 {
-	// 1st triangle
-	triangles.push_back(a);
-	triangles.push_back(b);
-	triangles.push_back(d);
+	template<typename VEC>
+	void addFace(std::vector<VEC>& triangles, const VEC& a, const VEC& b, const VEC& c, const VEC& d)
+	{
+		// 1st triangle
+		triangles.push_back(a);
+		triangles.push_back(b);
+		triangles.push_back(d);
 
-	// 2nd triangle
-	triangles.push_back(b);
-	triangles.push_back(d);
-	triangles.push_back(c);
+		// 2nd triangle
+		triangles.push_back(b);
+		triangles.push_back(d);
+		triangles.push_back(c);
+	}
+
+	void clampAngle(float& angle)
+	{
+		while (angle > M_PI)
+			angle -= 2.0 * M_PI;
+		while (angle <= -M_PI)
+			angle += 2.0 * M_PI;
+	}
 }
 
 void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
@@ -133,8 +155,18 @@ void DemoRenderer::run(MirNativeWindowControl& nativeWindow)
 
 	m_cubeVertexCount = v.size();
 
-	for (int i = 0; i < 1000; i++)
+	// target frames per second value
+	constexpr unsigned fps = 30;
+	const clock::duration framePeriod = std::chrono::milliseconds(static_cast<unsigned>(std::round(1000.0/fps)));
+
+	while (true)
 	{
+		// limit rendering to requested fps value
+		if (m_lastFrameTimeStampValid)
+		{
+			std::this_thread::sleep_until(m_lastFrameTimeStamp + framePeriod);
+		}
+
 		renderFrame();
 		nativeWindow.swapBuffers();
 	}
@@ -156,32 +188,37 @@ void DemoRenderer::handleEvent(const MirEvent* event)
 
 void DemoRenderer::renderFrame()
 {
+	const clock::time_point t = clock::now();
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::mat4 view = glm::lookAt(
-				glm::vec3(4,3,3),
+				glm::vec3(0,0,6),
 				glm::vec3(0,0,0),
 				glm::vec3(0,1,0)
 				);
 
-	static float angle = 0.0f;
-	angle += 2.0*M_PI / 200;
-	if (angle >= 2.0 * M_PI)
-		angle -= 2.0 * M_PI;
+	// rotate the cube if it has a nonzero speed
+	// model this as rotation with fixed angular acceleration (deceleration)
+	if (m_lastFrameTimeStampValid && (m_rotationAngularSpeedX != 0.0f || m_rotationAngularSpeedY != 0.0f))
+	{
+		const std::chrono::duration<float> durationSinceLastFrame = t - m_lastFrameTimeStamp;
+		const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceLastFrame);
+		const float secsSinceLastFrame = ms.count() / 1000.0f;
 
-	glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		rotateAlongAxis(m_rotationAngleX, m_rotationAngularSpeedX, secsSinceLastFrame);
+		rotateAlongAxis(m_rotationAngleY, m_rotationAngularSpeedY, secsSinceLastFrame);
+	}
+
+	glm::mat4 model = glm::rotate(glm::rotate(glm::mat4(1.0f), m_rotationAngleX, glm::vec3(1, 0, 0)), m_rotationAngleY, glm::vec3(0, 1, 0));
 
 	glm::mat4 mvpMatrix = m_projectionMatrix * view * model;
 	glUniformMatrix4fv(m_mvpMatrixIndex, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 
 	glDrawArrays(GL_TRIANGLES, 0, m_cubeVertexCount);
 
-#if 0
-	if (m_fingerDown)
-		glClearColor(1., 0., 0., 1.);
-	else
-		glClearColor(0., 0., 1., 1.);
-#endif
+	m_lastFrameTimeStampValid = true;
+	m_lastFrameTimeStamp = t;
 }
 
 void DemoRenderer::handleInputEvent(const MirInputEvent* inputEvent)
@@ -192,49 +229,211 @@ void DemoRenderer::handleInputEvent(const MirInputEvent* inputEvent)
 	{
 	case mir_input_event_type_touch:
 		{
-			std::cout << "DemoRenderer::handleInputEvent: type TOUCH" << std::endl;
-			MirTouchEvent const* touchEvent = mir_input_event_get_touch_event(inputEvent);
-			if (!touchEvent)
-				throw std::runtime_error("mir_input_event_get_touch_event returned null!");
-
-			handleInputTouchEvent(touchEvent);
+			const MirTouchEvent* touchEvent = mir_input_event_get_touch_event(inputEvent);
+			if (touchEvent)
+				handleInputTouchEvent(touchEvent);
 		}
 		break;
 
 	case mir_input_event_type_key:
-		std::cout << "DemoRenderer::handleInputEvent: type KEY" << std::endl;
+		{
+			const MirKeyboardEvent* keyboardEvent = mir_input_event_get_keyboard_event(inputEvent);
+			if (keyboardEvent)
+				handleKeyboardEvent(keyboardEvent);
+		}
 		break;
 
 	case mir_input_event_type_pointer:
-		std::cout << "DemoRenderer::handleInputEvent: type POINTER" << std::endl;
+		{
+			const MirPointerEvent* pointerEvent = mir_input_event_get_pointer_event(inputEvent);
+			if (pointerEvent)
+				handlePointerEvent(pointerEvent);
+		}
 		break;
 	}
 }
 
 void DemoRenderer::handleInputTouchEvent(const MirTouchEvent* touchEvent)
 {
-	const MirTouchAction action = mir_touch_event_action(touchEvent, 0);
-	const float touchX = mir_touch_event_axis_value(touchEvent, 0, mir_touch_axis_x);
-	const float touchY = mir_touch_event_axis_value(touchEvent, 0, mir_touch_axis_y);
+	const unsigned touchCount = mir_touch_event_point_count(touchEvent);
+	unsigned touchIndex;
 
-	const char *actionStr;
+	if (m_pointerState == PointerState::Up)
+	{
+		for (touchIndex = 0; touchIndex < touchCount; touchIndex++)
+		{
+			const MirTouchAction action = mir_touch_event_action(touchEvent, touchIndex);
+			if (action == mir_touch_action_down)
+				break;
+		}
+		if (touchIndex < touchCount)
+		{
+			m_pointerState = PointerState::FingerDown;
+			m_fingerId = mir_touch_event_id(touchEvent, touchIndex);
+
+			const float pointerX = mir_touch_event_axis_value(touchEvent, touchIndex, mir_touch_axis_x);
+			const float pointerY = mir_touch_event_axis_value(touchEvent, touchIndex, mir_touch_axis_y);
+			onPointerDown(pointerX, pointerY);
+		}
+	}
+	else if (m_pointerState == PointerState::FingerDown)
+	{
+		for (touchIndex = 0; touchIndex < touchCount; touchIndex++)
+		{
+			if (mir_touch_event_id(touchEvent, touchIndex) == m_fingerId)
+				break;
+		}
+		if (touchIndex < touchCount)
+		{
+			const MirTouchAction action = mir_touch_event_action(touchEvent, touchIndex);
+			if (action == mir_touch_action_change)
+			{
+				const float pointerX = mir_touch_event_axis_value(touchEvent, touchIndex, mir_touch_axis_x);
+				const float pointerY = mir_touch_event_axis_value(touchEvent, touchIndex, mir_touch_axis_y);
+				onPointerMove(pointerX, pointerY);
+			}
+			else if (action == mir_touch_action_up)
+			{
+				m_pointerState = PointerState::Up;
+
+				const float pointerX = mir_touch_event_axis_value(touchEvent, touchIndex, mir_touch_axis_x);
+				const float pointerY = mir_touch_event_axis_value(touchEvent, touchIndex, mir_touch_axis_y);
+				onPointerUp(pointerX, pointerY);
+			}
+		}
+	}
+}
+
+void DemoRenderer::handleKeyboardEvent(const MirKeyboardEvent* keyboardEvent)
+{
+	const MirKeyboardAction action = mir_keyboard_event_action(keyboardEvent);
+	const int keyCode = mir_keyboard_event_scan_code(keyboardEvent);
+	const xkb_keysym_t keySym = mir_keyboard_event_key_code(keyboardEvent);
+
+	const char *actionString;
 	switch (action)
 	{
-	case mir_touch_action_up:
-		actionStr = "up";
+	case mir_keyboard_action_down:
+		actionString = "DOWN";
 		break;
-	case mir_touch_action_down:
-		actionStr = "down";
+	case mir_keyboard_action_up:
+		actionString = "UP";
 		break;
-	case mir_touch_action_change:
-		actionStr = "change";
+	case mir_keyboard_action_repeat:
+		actionString = "REPEAT";
 		break;
+	default:
+		actionString = "UNKNOWN";
 	}
 
-	std::cout << "DemoRenderer::handleInputTouchEvent: finger#0 " << actionStr << " at (" << touchX << "," << touchY << ")" << std::endl;
+	std::cout << "keyboard event " << actionString << ": key code=" << keyCode << ", key sym=" << keySym << std::endl;
+}
 
-	if (action == mir_touch_action_down)
-		m_fingerDown = true;
-	else if (action == mir_touch_action_up)
-		m_fingerDown = false;
+void DemoRenderer::handlePointerEvent(const MirPointerEvent* pointerEvent)
+{
+	const MirPointerAction action = mir_pointer_event_action(pointerEvent);
+	const bool primaryButtonDown = mir_pointer_event_button_state(pointerEvent, mir_pointer_button_primary);
+	const float pointerX = mir_pointer_event_axis_value(pointerEvent, mir_pointer_axis_x);
+	const float pointerY = mir_pointer_event_axis_value(pointerEvent, mir_pointer_axis_y);
+
+	if (m_pointerState == PointerState::Up)
+	{
+		if (action == mir_pointer_action_button_down && primaryButtonDown)
+		{
+			m_pointerState = PointerState::PointerDown;
+			onPointerDown(pointerX, pointerY);
+		}
+	}
+	else if (m_pointerState == PointerState::PointerDown)
+	{
+		if ((action == mir_pointer_action_button_up && !primaryButtonDown) || action == mir_pointer_action_leave)
+		{
+			m_pointerState = PointerState::PointerDown;
+			onPointerUp(pointerX, pointerY);
+		}
+		else if (action == mir_pointer_action_motion)
+		{
+			onPointerMove(pointerX, pointerY);
+		}
+	}
+}
+
+void DemoRenderer::onPointerDown(float x, float y)
+{
+	std::cout << "onPointerDown " << x << "," << y << std::endl;
+
+	// stop any posible rotation
+	m_rotationAngularSpeedX = 0.0f;
+	m_rotationAngularSpeedY = 0.0f;
+
+	// store the start position
+	m_lastX = x;
+	m_lastY = y;
+
+	// notify gesture handler
+	m_swipeGesture.down(x, y);
+}
+
+void DemoRenderer::onPointerMove(float x, float y)
+{
+	std::cout << "onPointerMove " << x << "," << y << std::endl;
+	rotateCube(x, y);
+}
+
+void DemoRenderer::onPointerUp(float x, float y)
+{
+	std::cout << "onPointerUp " << x << "," << y << std::endl;
+	rotateCube(x, y);
+	m_swipeGesture.up(x, y);
+}
+
+void DemoRenderer::onSwipe(float dx, float dy)
+{
+	std::cout << "onSwipe " << dx << "," << dy << std::endl;
+
+	// the rotation axis is perpendicular to the movement -> dx affects rotation along Y and dy affects X
+	m_rotationAngularSpeedX = dy / 100.0f; // dy is in screen coordinates, -dy_{gl} = dy_{screen}
+	m_rotationAngularSpeedY = dx / 100.0f;
+}
+
+void DemoRenderer::rotateCube(float x, float y)
+{
+	// it would be better to implement something like https://www.khronos.org/opengl/wiki/Object_Mouse_Trackball
+	// the following must suffice here :)
+	const float dx = x - m_lastX;
+	const float dy = m_lastY - y; // y axis coordinate grows downwards, but GLES y coordinate grows upwards (by default)
+
+	m_rotationAngleX += -dy/ 500;
+	m_rotationAngleY += dx / 400;
+
+	clampAngle(m_rotationAngleX);
+	clampAngle(m_rotationAngleY);
+
+	m_lastX = x;
+	m_lastY = y;
+}
+
+void DemoRenderer::rotateAlongAxis(float& rotationAngle, float& rotationAngularSpeed, float secsSinceLastFrame)
+{
+	const float DECELERATION = 2.0f; // rad/s^2
+
+	if (rotationAngularSpeed == 0.0f)
+		return; // nothing to do
+
+	const float d = rotationAngularSpeed > 0.0f ? DECELERATION : -DECELERATION;
+	const float t_E = rotationAngularSpeed / d; // time when the rotation should stop
+
+	if (secsSinceLastFrame > t_E)
+	{
+		// the rotation has stopped somewhere between this and the previous frame
+		rotationAngle += (rotationAngularSpeed - 0.5f * d * t_E) * t_E;
+	}
+	else
+	{
+		// the rotation continues, but the speed is decreased
+		rotationAngle += (rotationAngularSpeed - 0.5f * d* secsSinceLastFrame) * secsSinceLastFrame;
+		rotationAngularSpeed -= d * secsSinceLastFrame;
+	}
+
+	clampAngle(rotationAngle);
 }
