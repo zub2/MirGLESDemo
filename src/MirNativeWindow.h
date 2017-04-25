@@ -24,7 +24,8 @@
 
 #include <EGL/egl.h>
 
-#include <boost/thread/mutex.hpp>
+#include <memory>
+#include <mutex>
 
 #include "MirNativeWindowControl.h"
 #include "MirNativeWindowRenderer.h"
@@ -61,7 +62,7 @@ private:
 	EGLDisplay m_eglDisplay;
 	EGLSurface m_eglSurface;
 
-	boost::mutex m_eventMutex;
+	std::mutex m_eventMutex;
 
 	std::shared_ptr<MirNativeWindowRenderer> m_renderer;
 };

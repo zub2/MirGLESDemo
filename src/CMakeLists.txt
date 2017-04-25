@@ -11,13 +11,6 @@ if (NOT LIBGLESv2)
 	message(FATAL_ERROR "Can't find libGLESv2")
 endif()
 
-# Currently the Ubuntu SDK target containers lack boost devel packages.
-# In order for the following command to succeed it's necessary
-# to install at least libboost-filesystem-dev and libboost-system-dev
-# for the target arch. For example, for armhf, run:
-# $ usdk-target maint device-armhf apt install libboost-filesystem-dev:armhf libboost-system-dev:armhf
-find_package(Boost REQUIRED COMPONENTS filesystem system)
-
 find_package(PNG REQUIRED)
 
 add_executable(mir_gles_demo
@@ -56,7 +49,6 @@ target_compile_definitions(mir_gles_demo PRIVATE
 )
 target_include_directories(mir_gles_demo SYSTEM PRIVATE
 	${MIRCLIENT_INCLUDE_DIRS}
-	${Boost_INCLUDE_DIRS}
 	${PNG_INCLUDE_DIRS}
 	${GLM_INCLUDE_DIRS}
 )
@@ -64,7 +56,6 @@ target_link_libraries(mir_gles_demo
 	${MIRCLIENT_LIBRARIES}
 	${LIBEGL}
 	${LIBGLESv2}
-	${Boost_LIBRARIES}
 	${PNG_LIBRARIES}
 )
 target_compile_options(mir_gles_demo PUBLIC ${MIRCLIENT_CFLAGS_OTHER})

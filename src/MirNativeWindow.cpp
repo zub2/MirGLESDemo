@@ -20,7 +20,6 @@
 #include "Exceptions.h"
 
 #include <utility>
-#include <boost/thread/lock_guard.hpp>
 #include <iostream>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -100,7 +99,7 @@ void MirNativeWindow::swapBuffers()
 
 void MirNativeWindow::surfaceEventHandler(const MirEvent* event)
 {
-	boost::lock_guard<boost::mutex> guard(m_eventMutex);
+	std::lock_guard<std::mutex> guard(m_eventMutex);
 	m_renderer->handleEvent(event);
 }
 
